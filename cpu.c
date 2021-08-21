@@ -36,7 +36,7 @@ extern void printhex(uint16_t val);
 extern void serout(uint8_t value);
 extern void serouthex(uint8_t val);
 extern uint8_t getAkey(void);	// for serial port get normal ASCII keys
-extern uint8_t getKIMkey();		// for emulation of KIM keypad
+extern uint8_t getKIMkey();
 extern void clearkey(void);
 extern void driveLEDs();
 extern void scanKeys(); 
@@ -45,9 +45,8 @@ void nmi6502(void);
 
 uint8_t useKeyboardLed=0x01; 	// set to 0 to use Serial port, to 1 to use onboard keyboard/LED display.
 uint8_t iii;  					// counter for various purposes, declared here to avoid in-function delay in 6502 functions.
-uint8_t nmiFlag=0; 				// added by OV to aid single-stepping SST mode on KIM-I
-uint8_t SSTmode = 0; 			// SST switch in KIM-I: 1 = on.
-
+uint8_t nmiFlag=0; 				
+uint8_t SSTmode = 0; 			
 
 #define FLAG_CARRY     0x01
 #define FLAG_ZERO      0x02
@@ -107,9 +106,6 @@ uint8_t RAM[1024]; 	// main 1KB RAM	     0x0000-0x04FF
 #ifndef AVRX
 uint8_t RAM2[1024]; 	// on PC, ram in     0x0500-0x08FF instead of Arduino EEPROM
 #endif              	// on Arduino,		            these are EEPROM functions
-// empty            					    0x0900-0x13FF
-// I/O and timer of 6530-003, free for user  0x1700-0x173F, not used in KIM ROM
-// I/O and timer of 6530-002, used by KIM    0x1740-0x177F, used by LED/Keyboard
 uint8_t RAM003[64];    // RAM from 6530-003  0x1780-0x17BF, free for user applications
 uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except 0x17E7-0x17FF
 // rom003 is                                 0x1800-0x1BFF
@@ -120,8 +116,6 @@ uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except
 //               FFFA, FFFB - NMI Vector
 //               FFFC, FFFD - RST Vector
 //               FFFE, FFFF - IRQ Vector
-// Application roms (mchess, calc) are above standard 8K of KIM-1
-
 
 // --- CRBond calculator RAM workspace: --------------------------------------------
 // - NOTE THAT UPPER 128 BYTES OF CHIP RAM IS USED BY CALCULATOR AS WORKSPACE!
@@ -386,9 +380,6 @@ unsigned char rom003[1024] = {
 	0x6B, 0x1A, 0x6B, 0x1A};
 
 
-// Microchess at C000:
-/* C:\temp27\KIM Uno\sw\KIM Uno 6502 ROM sources\microchess for KIM Uno\UCHESS7.BIN (15/09/2014 14:35:46)
-   StartOffset: 00000000, EndOffset: 00000570, Length: 00000571 */
 
 #ifdef AVRX
 const unsigned char mchess[1393] PROGMEM = {  
@@ -514,8 +505,7 @@ unsigned char mchess[1393] = {
 	0xCC
 };
 
-/* C:\temp27\KIM Uno\sw\KIM Uno 6502 ROM sources\fltpt65 for KIM Uno\fs6.bin (19/09/2014 17:17:16)
-   StartOffset: 00000000, EndOffset: 00001FDF, Length: 00001FE0 */
+
 
 //unsigned char calcRom[8160] = {
 #ifdef AVRX
@@ -1223,8 +1213,7 @@ unsigned char calcRom[8164] = {
 	0x00, 0x00, 0x00, 0x00, 0xC0, 0x02, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x50, 0x00
 };
 
-/* MOVIT utility, copied into RAM 1780-17E3. Length: decimal 102 */
-/* for use, see http://users.telenet.be/kim1-6502/6502/fbok.html#p114 */
+
 #ifdef AVRX
 const unsigned char movit[100] PROGMEM = {  
 #else
@@ -1238,8 +1227,7 @@ unsigned char movit[95] = {
         0xE6, 	0xD4, 	0xD0, 	0x02, 	0xE6, 	0xD5, 	0xC6, 	0xD8, 	0xD0, 	0x02, 	0xC6, 	0xD9, 	0xD0, 	0xCC, 	0x00 /*, 	0x4C, 0x4F, 0x1C */
 };
 
-/* RELOCATE utility, copied into RAM 0110-01A4. Length: decimal 149 */
-/* for use, see http://users.telenet.be/kim1-6502/6502/fbok.html#p114 */
+
 #ifdef AVRX
 const unsigned char relocate[149] PROGMEM = {  
 #else
@@ -1257,8 +1245,7 @@ unsigned char relocate[149] = {
         0x01, 	0x01, 	0x00, 	0xFF, 	0xFE											
 };
 
-/* BRANCH calculation utility, to be copied into RAM anywhere you want (relocatable). Length: decimal 42 */
-/* for use, see http://users.telenet.be/kim1-6502/6502/fbok.html#p114 */
+
 #ifdef AVRX
 const unsigned char branch[42] PROGMEM = {  
 #else
@@ -1269,8 +1256,7 @@ unsigned char branch[42] = {
        	0x0A, 	0x26, 	0xFA, 	0x26, 	0xFB, 	0xCA, 	0xD0, 	0xF8, 	0xF0, 	0xD6
 };
 
-/* C:\temp27\KIM Uno\sw\tools\WozBaum disasm\WozBaum disasm\dis2.bin (02/09/2014 23:58:36)
-   StartOffset: 00000000, EndOffset: 000001F8, Length: 000001F9 */
+
 #ifdef AVRX
 const unsigned char disasm[505] PROGMEM = {
 #else
@@ -1508,7 +1494,6 @@ uint8_t read6502(uint16_t address) {
 	if (address == 0x1EFE) // intercept AK (check for any key pressed)
 	{
 			a=getAkey();		 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
-			//a= getKIMkey();
 			if (a==0)	a=0xFF; // that's how AK wants to see 'no key'
 			pc = 0x1F14;    // skip subroutine 
 			return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
@@ -1644,7 +1629,7 @@ uint8_t read6502(uint16_t address) {
 	if (address == 0xCFF4) 					//simulated keyboard input
 	{	tempval = getAkey();
 		clearkey();
-        // translate KIM-1 button codes into ASCII code expected by this version of Microchess
+       
         switch (tempval) 
         {	case 16:  tempval = 'P';  break;    // PC translated to P
 			case 'F':  tempval = 13;  break;    // F translated to Return
@@ -1810,7 +1795,7 @@ void reset6502() {
     cpustatus |= FLAG_CONSTANT;
 }
 
-void initKIM() {                  // this is what user has to enter manually when powering KIM on. Why not do it here.
+void initKIM() {
 
         uint16_t i;
         
@@ -1859,10 +1844,10 @@ void initKIM() {                  // this is what user has to enter manually whe
 
 }
 
-void loadTestProgram() {  // Call this from main() if you want a program preloaded. It's the first program from First Book of KIM...
+void loadTestProgram() {  
         uint8_t i;
         
-        // the first program from First Book of KIM...
+  #
         uint8_t fbkDemo[9] = {  
           0xA5, 0x10, 0xA6, 0x11, 0x85, 0x11, 0x86, 0x10, 0x00 };
         for (i=0;i<9;i++)
