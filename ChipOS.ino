@@ -8,8 +8,7 @@
 //#define CH2_SPEAKERPIN 9
 #define WREG_OFFSET 0x0360
 #define AVRX		// define on for Arduino, off for normal PC C compilers. 
-                        // in kimuno.ino, this only relates to some code segments that are shared with PC version
-
+                        
 extern uint8_t RAM[1024]; 		// main 1KB RAM		 0x000-0x3FF
 extern uint16_t pc;  // 6502 pc
 extern uint8_t SSTmode;
@@ -17,8 +16,7 @@ extern uint8_t useKeyboardLed; // 0 to use Serial port or 1 for HEX digits.
 uint8_t curkey = 0;
 uint8_t eepromProtect=1;  // default is to write-protect EEPROM
 int blitzMode=1;  // microchess status variable. 1 speeds up chess moves (and dumbs down play)
-uint8_t keyboardMode=0;  // start with keyboard in KIM-1 mode. 1: calculator mode
-
+uint8_t keyboardMode=0; 
 char threeHex[3][2];        // LED display
 
 byte aCols[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
@@ -102,9 +100,9 @@ return (0xFF);	//0xFF: illegal keycode
       return(0x13); // GO
     if (curkey==16) // ctrlP
       return(0x14); // PC mode
-    // curkey==ctrlR for hard reset (/RST) (KIM's RS key) is handled in main loop!
+
     // curkey==ctrlT for ST key (/NMI) is handled in main loop!
-    return(curkey); // any other key, should not be hit but ignored by KIM
+    return(curkey);
   }
   
   uint8_t eepromread(uint16_t eepromaddress) {
@@ -127,7 +125,7 @@ void setup () {
   setupUno();
 
   reset6502();
-  initKIM(); // Enters 1c00 in KIM vectors 17FA and 17FE. Might consider doing 17FC as well????????
+  initKIM(); 
   loadTestProgram();
   
   Serial.print(F("v23oct14 freeMemory()=")); // just a little check, to avoid running out of RAM!
@@ -145,7 +143,7 @@ void loop () {
   }
     
   scanKeys();  
-  if (xkeyPressed()!=0) //KIM Uno board input?
+  if (xkeyPressed()!=0) 
     interpretkeys();
 
   //driveLEDs(); // doing that here would cause a massive slowdown but keeps display on at all times
@@ -159,7 +157,7 @@ int freeRam () {
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
-// translate keyboard commands to KIM-I keycodes or emulator actions
+
 void interpretkeys()
 {    
   // round 1: keys that always have the same meaning
@@ -217,7 +215,7 @@ void interpretkeys()
 }
   
 // =================================================================================================
-// KIM Uno Board functions are bolted on from here
+// ChipLet Board functions are bolted on from here
 // =================================================================================================
 
 void setupUno() {
@@ -304,9 +302,8 @@ void driveCalcLEDs(uint8_t *numberStr, uint8_t decpt)
 uint8_t parseChar(uint8_t n) //  parse keycode to return its ASCII code
 {
   uint8_t c;
-    
-  // KIM-I keys
-  switch (n-1) {              //KIM Uno keyscan codes to ASCII codes used by emulator
+  
+  switch (n-1) {              
     case	7	: c = 	'0' ;  break;	//        note: these are n-1 numbers!
     case	6	: c = 	'1';  break;	// 
     case	5	: c = 	'2';  break;	// 
@@ -650,7 +647,7 @@ uint8_t showflt(uint8_t reg)	// returns location of decimal point in string
         do { driveCalcLEDs(fltstr, decpt);          scanKeys();
         } while (curkey==0);
         if ((curkey<'C') || (curkey>'F'))
-          curkey=0;  // to clear any keypresses before returning to KIM    
+          curkey=0; 
         #else
         // show number with dec point inserted
 	for (i=0;i<=decpt;i++)
